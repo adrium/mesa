@@ -18,18 +18,38 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# TODO: support non-static targets
-# Static targets are always enabled in autotools (unless you modify
-# configure.ac)
-
 va_link_args = []
 va_link_depends = []
 va_drivers = []
+va_driver_dependencies = []
 
 if with_ld_version_script
   va_link_args += ['-Wl,--version-script', join_paths(meson.current_source_dir(), 'va.sym')]
   va_link_depends += files('va.sym')
 endif
+foreach d : [[with_gallium_kmsro, driver_kmsro],
+             [with_gallium_radeonsi, driver_radeonsi],
+             [with_gallium_r300, driver_r300],
+             [with_gallium_r600, driver_r600],
+             [with_gallium_nouveau, driver_nouveau],
+             [with_gallium_freedreno, driver_freedreno],
+             [with_gallium_softpipe, driver_swrast],
+             [with_gallium_vc4, driver_vc4],
+             [with_gallium_v3d, driver_v3d],
+             [with_gallium_panfrost, driver_panfrost],
+             [with_gallium_etnaviv, driver_etnaviv],
+             [with_gallium_tegra, driver_tegra],
+             [with_gallium_iris, driver_iris],
+             [with_gallium_i915, driver_i915],
+             [with_gallium_svga, driver_svga],
+             [with_gallium_virgl, driver_virgl],
+             [with_gallium_swr, driver_swr],
+             [with_gallium_lima, driver_lima],
+             [with_gallium_zink, driver_zink]]
+  if d[0]
+    va_driver_dependencies += d[1]
+  endif
+endforeach
 
 libva_gallium = shared_library(
   'gallium_drv_video',
@@ -46,8 +66,8 @@ libva_gallium = shared_library(
     libpipe_loader_static, libws_null, libwsw, libswdri, libswkmsdri,
   ],
   dependencies : [
-    dep_libdrm, driver_r600, driver_radeonsi, driver_nouveau,
-    idep_mesautil, idep_xmlconfig_headers,
+    dep_libdrm, idep_mesautil, idep_xmlconfig_headers,
+    va_driver_dependencies,
   ],
   link_depends : va_link_depends,
   # Will be deleted during installation, see install_megadrivers.py

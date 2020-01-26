@@ -18,13 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# TODO: support non-static targets
-# Static targets are always enabled in autotools (unless you modify
-# configure.ac)
-
 vdpau_link_args = []
 vdpau_link_depends = []
 vdpau_drivers = []
+vdpau_driver_dependencies = []
 
 if with_ld_version_script
   vdpau_link_args += ['-Wl,--version-script', join_paths(meson.current_source_dir(), 'vdpau.sym')]
@@ -34,6 +31,29 @@ if with_ld_dynamic_list
   vdpau_link_args += ['-Wl,--dynamic-list', join_paths(meson.current_source_dir(), '../dri-vdpau.dyn')]
   vdpau_link_depends += files('../dri-vdpau.dyn')
 endif
+foreach d : [[with_gallium_kmsro, driver_kmsro],
+             [with_gallium_radeonsi, driver_radeonsi],
+             [with_gallium_r300, driver_r300],
+             [with_gallium_r600, driver_r600],
+             [with_gallium_nouveau, driver_nouveau],
+             [with_gallium_freedreno, driver_freedreno],
+             [with_gallium_softpipe, driver_swrast],
+             [with_gallium_vc4, driver_vc4],
+             [with_gallium_v3d, driver_v3d],
+             [with_gallium_panfrost, driver_panfrost],
+             [with_gallium_etnaviv, driver_etnaviv],
+             [with_gallium_tegra, driver_tegra],
+             [with_gallium_iris, driver_iris],
+             [with_gallium_i915, driver_i915],
+             [with_gallium_svga, driver_svga],
+             [with_gallium_virgl, driver_virgl],
+             [with_gallium_swr, driver_swr],
+             [with_gallium_lima, driver_lima],
+             [with_gallium_zink, driver_zink]]
+  if d[0]
+    vdpau_driver_dependencies += d[1]
+  endif
+endforeach
 
 
 libvdpau_gallium = shared_library(
@@ -52,7 +72,7 @@ libvdpau_gallium = shared_library(
   ],
   dependencies : [
     idep_mesautil, idep_xmlconfig_headers,
-    driver_r300, driver_r600, driver_radeonsi, driver_nouveau,
+    vdpau_driver_dependencies,
   ],
   link_depends : vdpau_link_depends,
   soversion : '@0@.@1@.0'.format(VDPAU_MAJOR, VDPAU_MINOR),
